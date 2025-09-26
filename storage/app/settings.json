@@ -1,0 +1,24 @@
+{
+    "server_ip": "103.150.93.80",
+    "site_url": "localhost:8000",
+    "site_name": "CLOAKING",
+    "site_description": "CLOAKING",
+    "icon": null,
+    "logo": null,
+    "sosmed": {
+        "facebook_url": "https:\/\/facebook.com",
+        "instagram_url": "#",
+        "titktok_url": "#",
+        "whatsapp_url": "#"
+    },
+    "meta_setting": [
+        {
+            "name": "author",
+            "content": "justorange"
+        },
+        {
+            "name": "description",
+            "content": "justorange"
+        }
+    ]
+}
