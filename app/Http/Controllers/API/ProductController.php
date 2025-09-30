@@ -18,17 +18,20 @@ class ProductController extends Controller
     }
 
 
-    public function getFromCategory($category_id)
+    public function getFromCategory(Request $request)
     {
-        $products = Product::where('category_id', $category_id)->where('active', true)->orderBy('id','desc')->get();
+        $category_id = $request->category_id;
+        $products = Product::where('category_id', $category_id)->orderBy('id','desc')->get();
         return response()->json([
             'success' =>true,
             'data' => $products
         ] , 200,[],JSON_PRETTY_PRINT);
     }
 
-    public function getFromId($id)
+    public function getFromId(Request $request)
     {
+        $id = $request->id;
+
         $product = Product::find($id);
         if(!$product) {
             return response()->json([

@@ -18,8 +18,9 @@ class CategoryController extends Controller
         
     }
 
-    public function getFromId($id)
+    public function getFromId(Request $request)
     {
+        $id = $request->id;
         $category = Category::find($id);
         if(!$category) {
             return response()->json([
@@ -33,8 +34,9 @@ class CategoryController extends Controller
         ], 200, [], JSON_PRETTY_PRINT);
     }
 
-    public function getFromSlug($slug)
+    public function getFromSlug(Request $request)
     {
+        $slug = $request->slug;
         $category = Category::where('slug', $slug)->first();
         if(!$category) {
             return response()->json([
