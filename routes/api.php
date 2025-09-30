@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\API\CategoryController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -18,3 +19,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+Route::get('/categories',[CategoryController::class,'index'])->name('api.categories.index');
+Route::get('/category/{id}',[CategoryController::class,'getFromId'])->name('api.category.getFromId');
+Route::get('/product/category/{category_id}',[App\Http\Controllers\API\ProductController::class,'getFromCategory'])->name('api.product.getFromCategory');
+Route::get('/products',[App\Http\Controllers\API\ProductController::class,'index'])->name('api.products.index');
+Route::get('/product/{id}',[App\Http\Controllers\API\ProductController::class,'getFromId'])->name('api.product.getFromId');

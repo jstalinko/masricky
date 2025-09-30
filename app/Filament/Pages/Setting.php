@@ -43,23 +43,22 @@ class Setting extends Page implements HasForms
     public function form(Form $form):Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('server_ip')->label('IP SERVER'),
-            Forms\Components\TextInput::make('site_url')->prefix('https://')->required(),
-            Forms\Components\TextInput::make('site_name')->required(),
-            Forms\Components\TextInput::make('site_description')->required(),
-            Forms\Components\FileUpload::make('icon')->avatar()->image(),
-            Forms\Components\FileUpload::make('logo')->image()->imageEditor(),
-
-            Forms\Components\Section::make('sosial media')->schema([
-                Forms\Components\TextInput::make('sosmed.facebook_url'),
-                Forms\Components\TextInput::make('sosmed.instagram_url'),
-                Forms\Components\TextInput::make('sosmed.titktok_url'),
-                Forms\Components\TextInput::make('sosmed.whatsapp_url'),
-            ])->columns(2),
-            Forms\Components\Repeater::make('meta_setting')->schema([
-                Forms\Components\TextInput::make('name'),
-                Forms\Components\TextInput::make('content')
-            ])->columns(2)
+            Forms\Components\TextInput::make('telegram_bot_link')
+                ->label('Telegram Bot Link')
+                ->required()
+                ->placeholder('https://t.me/your_bot_link'),
+            Forms\Components\TextInput::make('telegram_bot_token')
+                ->label('Telegram Bot Token')
+                ->required()
+                ->placeholder('123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ'),
+            Forms\Components\TextInput::make('admin_telegram_id')
+                ->label('Admin Telegram ID')
+                ->required()
+                ->placeholder('123456789'),
+            Forms\Components\Textarea::make('welcome_message')
+                ->label('Welcome Message')
+                ->required()
+                ->placeholder('Welcome to our service!'),
         ])->statePath('data');
     }
 
