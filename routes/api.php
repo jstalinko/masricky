@@ -24,3 +24,12 @@ Route::get('/category/{id}',[CategoryController::class,'getFromId'])->name('api.
 Route::get('/product/category/{category_id}',[App\Http\Controllers\API\ProductController::class,'getFromCategory'])->name('api.product.getFromCategory');
 Route::get('/products',[App\Http\Controllers\API\ProductController::class,'index'])->name('api.products.index');
 Route::get('/product/{id}',[App\Http\Controllers\API\ProductController::class,'getFromId'])->name('api.product.getFromId');
+
+Route::any('/payment/callback', function(){
+    return response()->json(
+        [
+            'success' => true,
+            'message' => 'Payment callback received'
+        ],200,[],JSON_PRETTY_PRINT);
+        
+});

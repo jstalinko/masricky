@@ -19,3 +19,5 @@ yarn-error.log
 /.vscode
 *.sqlite
 *.db
+telebot/node_modules
+telebot/.env
