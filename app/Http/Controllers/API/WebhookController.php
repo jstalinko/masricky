@@ -32,18 +32,19 @@ class WebhookController extends Controller
         {
             $settings= json_decode(file_get_contents(storage_path('app/settings.json')), true);
             // fetch bot telegram api
-           $message = "----[ Pembayaran Berhasil ]----\n\n".
+          $message = "----[ Pembayaran Berhasil ]----\n\n".
            "Invoice : ".$order->invoice."\n".
            "Total   : Rp ".number_format($order->total, 0, ',', '.')."\n\n".
            "--------------------------------\n\n".
-           "📦 Produk :\n".
-           "```".strip_tags($order->product->content)."```"."\n\n".
+           "📦 Produk :\n<pre>".strip_tags($order->product->content)."</pre>\n\n".
            "Terimakasih telah berbelanja di Bstore.ID 🙏";
 
 $url = "https://api.telegram.org/bot".$settings['telegram_bot_token'].
        "/sendMessage?chat_id=".$order->user->telegram_id.
        "&text=".urlencode($message).
-       "&parse_mode=MarkdownV2";
+       "&parse_mode=HTML";
+
+file_get_contents($url);
 
 file_get_contents($url);
 
