@@ -221,7 +221,13 @@ bot.action(/category_(.+)/, async (ctx) => {
             }
             const productButtons = products.map(product => {
                 const priceFormatted = `Rp ${product.price.toLocaleString('id-ID')}`;
-                return Markup.button.callback(`${product.name} (${priceFormatted})`, `product_${product.id}`);
+                var icons;
+                if(product.status == 'sold'){
+                    icons = '❌ SOLD';
+                } else {
+                    icons = '✅ READY';
+                }
+                return Markup.button.callback(`${product.name} (${priceFormatted}) ${icons}`, `product_${product.id}`);
             });
             productButtons.push(Markup.button.callback('⬅️ Kembali ke Kategori', 'back_to_categories'));
             const keyboard = Markup.inlineKeyboard(productButtons, { columns: 1 });
