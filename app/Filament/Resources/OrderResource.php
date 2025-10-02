@@ -55,14 +55,14 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('payment_id'),
-                Tables\Columns\TextColumn::make('invoice'),
+                Tables\Columns\TextColumn::make('payment_id')->searchable()->copyable(),
+                Tables\Columns\TextColumn::make('invoice')->searchable()->copyable(),
                 Tables\Columns\TextColumn::make('user.username')
                     ->numeric()
-                    ->sortable(),
+                    ->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('product.name')
                     ->numeric()
-                    ->sortable(),
+                    ->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('amount')
                     ->money(currency:'IDR')
                     ->sortable(),
