@@ -50,8 +50,6 @@ $url = "https://api.telegram.org/bot".$settings['telegram_bot_token'].
 
 file_get_contents($url);
 
-file_get_contents($url);
-
         }
         // Update order berdasarkan status dari Xendit
         $order->update([
