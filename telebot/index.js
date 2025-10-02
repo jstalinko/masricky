@@ -350,7 +350,7 @@ bot.action(/cancel_(.+)/, async (ctx) => {
             await showCategories(ctx, false); 
         } else {
             // Jika API merespon success: false (misal, pesanan sudah dibayar)
-            await ctx.reply(response.data.message || 'Gagal membatalkan pesanan. Mungkin statusnya sudah berubah.');
+            await ctx.reply(response.data.message || 'Gagal membatalkan pesanan. Mungkin sudah dibayar atau sudah di selesaikan');
         }
 
     } catch (error) {
