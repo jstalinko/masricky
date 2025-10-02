@@ -41,6 +41,7 @@ class WebhookController extends Controller
            "📦 Produk :\n<pre>
            ".strip_tags($order->product->content)."
            </pre>\n\n".
+           "<b>".$order?->product?->category?->description."</b>\n".
            "Terimakasih telah berbelanja di Bstore.ID 🙏";
 
 $url = "https://api.telegram.org/bot".$settings['telegram_bot_token'].
