@@ -21,7 +21,7 @@ class WebhookController extends Controller
         }
 
         // Cari order berdasarkan external_id (invoice)
-        $order = Order::where('invoice', $payload['external_id'])->first();
+        $order = Order::where('invoice', $payload['external_id'])->with('products')->first();
 
         if (!$order) {
             Log::warning('Order not found for invoice: ' . $payload['external_id']);
@@ -32,7 +32,14 @@ class WebhookController extends Controller
         {
             $settings= json_decode(file_get_contents(storage_path('app/settings.json')), true);
             // fetch bot telegram api
-            file_get_contents("https://api.telegram.org/bot".$settings['telegram_bot_token']."/sendMessage?chat_id=".$order->user->telegram_id."&text=Pembayaran+berhasil+untuk+invoice+".$order->invoice.".+Pesanan+Anda+sedang+diproses.");
+            $message = "----[ Pembayaran Berhasil ]----\n\n".
+                       "Invoice: ".$order->invoice."\n".
+                       "Total: Rp ".number_format($order->total,0,',','.')."\n\n".
+                       "--------------------------------\n\n
+                        ".$order->product->content."\n\n
+                        
+                        Terimakasih telah berbelanja di Bstore.ID \n";
+            file_get_contents("https://api.telegram.org/bot".$settings['telegram_bot_token']."/sendMessage?chat_id=".$order->user->telegram_id."&text=".urlencode($message));
         }
         // Update order berdasarkan status dari Xendit
         $order->update([

@@ -268,11 +268,10 @@ bot.action(/product_(.+)/, async (ctx) => {
                                 `**Produk:** ${response.data.product?.name || '-'}\n` +
                                 `**Total Bayar:** *${priceFormatted}*\n\n` +
                                 `Silahkan lakukan pembayaran dengan klik tombol "Bayar" dibawah ini
-Setelah melakukan pembayaran, silahkan klik tombol "Konfirmasi Pembayaran" dibawah ini`;
+Setelah melakukan pembayaran, produk otomatis akan di kirim ke akun anda.`;
 
             const keyboard = Markup.inlineKeyboard([
                 Markup.button.url(`💳 Bayar ${priceFormatted}`, orderDetails.invoice_url),
-                Markup.button.callback('✅ Konfirmasi Pembayaran', `confirm_${orderDetails.external_id}`),
                 Markup.button.callback('❌ Batalkan', `cancel_${orderDetails.external_id}`)
             ],{ columns: 1 });
             // Kirim pesan invoice dengan tombol konfirmasi
