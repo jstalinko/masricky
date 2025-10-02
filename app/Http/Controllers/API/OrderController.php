@@ -49,14 +49,14 @@ class OrderController extends Controller
         if (!$product) {
             return response()->json([
                 'success' => false,
-                'message' => 'Product not found'
-            ], 404);
+                'message' => 'Produk tidak tesedia'
+            ], 200);
         }
         if($product->status == 'sold'){
             return response()->json([
                 'success' => false,
                 'message' => 'Produk sudah tidak tersedia / sold out'
-            ], 400);
+            ], 200);
         }
 
         \Xendit\Configuration::setXenditKey(env('XENDIT_API_KEY'));
