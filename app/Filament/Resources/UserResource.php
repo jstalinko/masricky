@@ -29,10 +29,13 @@ class UserResource extends Resource
                 Forms\Components\TextInput::make('email')
                     ->email()
                     ->required(),
-                Forms\Components\DateTimePicker::make('email_verified_at')->default(date('mm/dd/yyyy H:i:s')),
                 Forms\Components\TextInput::make('password')
                     ->password()
                     ->required(),
+                Forms\Components\TextInput::make('telegram_id'),
+            Forms\Components\TextInput::make('username'),
+            Forms\Components\TextInput::make('balance'),
+            Forms\Components\TextInput::make('phone'),
                     Forms\Components\Select::make('roles')->relationship('roles', 'name')->multiple()->preload()->searchable(),
                 
             ]);
@@ -47,9 +50,10 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
                 Tables\Columns\BadgeColumn::make('roles.name'),
-                Tables\Columns\TextColumn::make('email_verified_at')
-                    ->dateTime()
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('username'),
+                Tables\Columns\TextColumn::make('telegram_id'),
+                Tables\Columns\TextColumn::make('phone'),
+                Tables\Columns\TextColumn::make('balance'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

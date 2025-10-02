@@ -13,7 +13,8 @@
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
-        "webbingbrasil/filament-copyactions": "^3.0"
+        "webbingbrasil/filament-copyactions": "^3.0",
+         "xendit/xendit-php": "7.0.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
@@ -36,6 +37,12 @@
             "Tests\\": "tests/"
         }
     },
+    "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/xendit/xendit-php.git"
+    }
+  ],
     "scripts": {
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

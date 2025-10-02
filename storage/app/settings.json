@@ -1,24 +1,6 @@
 {
-    "server_ip": "103.150.93.80",
-    "site_url": "localhost:8000",
-    "site_name": "CLOAKING",
-    "site_description": "CLOAKING",
-    "icon": null,
-    "logo": null,
-    "sosmed": {
-        "facebook_url": "https:\/\/facebook.com",
-        "instagram_url": "#",
-        "titktok_url": "#",
-        "whatsapp_url": "#"
-    },
-    "meta_setting": [
-        {
-            "name": "author",
-            "content": "justorange"
-        },
-        {
-            "name": "description",
-            "content": "justorange"
-        }
-    ]
+    "telegram_bot_link": "https:\/\/t.me\/",
+    "telegram_bot_token": "8303902507:AAE0h0Qqb391fstlPGPEc5sPZ6EtlPmAgSM",
+    "admin_telegram_id": "99999999",
+    "welcome_message": "Selamat datang di Bstore.ID \ud83d\udc4b\nTempat mudah dan cepat untuk mendapatkan berbagai produk virtual favoritmu. Belanja aman, praktis, dan langsung aktif! \ud83d\ude80"
 }
