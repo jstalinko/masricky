@@ -167,7 +167,7 @@ bot.hears('📜 Riwayat Order', async (ctx) => {
                     day: '2-digit', month: 'short', year: 'numeric'
                 });
 
-                historyMessage += `**Invoice:** \`INV-${order.id}\`\n` +
+                historyMessage += `**Invoice:** \`INV-${order.invoice}\`\n` +
                                 `**Produk:** ${order.product.name}\n` +
                                 `**Status:** ${getStatusEmoji(order.status)} ${order.status}\n` +
                                 `**Tanggal:** ${formattedDate}\n` +
