@@ -52,6 +52,12 @@ class OrderController extends Controller
                 'message' => 'Product not found'
             ], 404);
         }
+        if($product->status == 'sold'){
+            return response()->json([
+                'success' => false,
+                'message' => 'Produk sudah tidak tersedia / sold out'
+            ], 400);
+        }
 
         \Xendit\Configuration::setXenditKey(env('XENDIT_API_KEY'));
         $apiInstance = new \Xendit\Invoice\InvoiceApi();

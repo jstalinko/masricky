@@ -45,11 +45,7 @@ class ProductResource extends Resource
                     ->required()
                     ->options(['ready' => 'Ready', 'sold' => 'Sold']),
                 Forms\Components\Toggle::make('unlimited_stock')
-                    ->required(),
-                Forms\Components\TextInput::make('stock')
-                    ->required()
-                    ->numeric()
-                    ->default(10),
+                    ->required(), 
                 Forms\Components\Toggle::make('active')
                     ->required(),
             ]);
@@ -83,9 +79,7 @@ class ProductResource extends Resource
                         'sold' => 'danger',
                         default => 'secondary',
                     }),
-                Tables\Columns\TextColumn::make('stock')
-                    ->formatStateUsing(fn ($state, $record) => $record->unlimited_stock ? 'Unlimited' : $state)
-                    ->sortable(),
+            
                 Tables\Columns\ToggleColumn::make('active')
                     ,
                 Tables\Columns\TextColumn::make('created_at')

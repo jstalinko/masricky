@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\Controller;
+use App\Models\Order;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Models\Order;
+use App\Http\Controllers\Controller;
 
 class WebhookController extends Controller
 {
@@ -30,6 +31,12 @@ class WebhookController extends Controller
 
         if($payload['status'] === 'PAID')
         {
+            $product = Product::find($order->product_id);
+            if($product->type == 'single')
+            {
+                $product->status = 'sold';
+                $product->save();
+            }
             $settings= json_decode(file_get_contents(storage_path('app/settings.json')), true);
             // fetch bot telegram api
           $message = "----[ Pembayaran Berhasil ]----\n\n".
