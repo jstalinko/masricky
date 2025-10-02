@@ -55,26 +55,33 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user_id')
+                Tables\Columns\TextColumn::make('payment_id'),
+                Tables\Columns\TextColumn::make('invoice'),
+                Tables\Columns\TextColumn::make('user.username')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('product_id')
+                Tables\Columns\TextColumn::make('product.name')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('amount')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('quantity')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('fee')
-                    ->numeric()
+                    ->money(currency:'IDR')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total')
-                    ->numeric()
+                    ->money(currency:'IDR')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
-                    ->searchable(),
+                    ->searchable()
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'PENDING' => 'warning',
+                        'COMPLETED' => 'success',
+                        'PAID' => 'success',
+                        'UNPAID' => 'danger',
+                        'EXPIRED' => 'danger',
+                        'CANCELLED' => 'danger',
+                        default => 'secondary',
+                    }),
+                Tables\Columns\TextColumn::make('payment_method'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

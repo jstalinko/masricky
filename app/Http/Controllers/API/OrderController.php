@@ -136,5 +136,29 @@ class OrderController extends Controller
         }
     }
 
+    public function getOrderByInvoice(Request $request)
+    {
+        $invoice_id = $request->invoice_id;
+        if (!$invoice_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Missing invoice_id'
+            ], 400);
+        }
+
+        $order = Order::where('invoice', $invoice_id)->with('product')->first();
+        if ($order) {
+            return response()->json([
+                'success' => true,
+                'data' => $order
+            ], 200);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found'
+            ], 404);
+        }
+    }
+
     
 }

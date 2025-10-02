@@ -28,6 +28,12 @@ class WebhookController extends Controller
             return response()->json(['message' => 'Order not found'], 404);
         }
 
+        if($payload['status'] === 'PAID')
+        {
+            $settings= json_decode(file_get_contents(storage_path('app/settings.json')), true);
+            // fetch bot telegram api
+            file_get_contents("https://api.telegram.org/bot".$settings['telegram_bot_token']."/sendMessage?chat_id=".$order->user->telegram_id."&text=Pembayaran+berhasil+untuk+invoice+".$order->invoice.".+Pesanan+Anda+sedang+diproses.");
+        }
         // Update order berdasarkan status dari Xendit
         $order->update([
             'status'         => $payload['status'],          // contoh: PAID, SETTLED, EXPIRED
@@ -37,6 +43,8 @@ class WebhookController extends Controller
             'fee'            => $payload['fees_paid_amount'] ?? $order->fee,
             'total'          => $payload['paid_amount'] ?? $order->total,
         ]);
+
+        
 
         return response()->json(['message' => 'OK'], 200);
     }
