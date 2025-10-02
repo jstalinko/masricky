@@ -110,7 +110,7 @@ class OrderController extends Controller
         $apiInstance = new \Xendit\Invoice\InvoiceApi();
 
         try {
-            $order = Order::where('invoice', $invoice_id)->first();
+            $order = Order::where('invoice', $invoice_id)->where('status','!=','paid')->first();
             if ($order) {
                 $order->status = 'CANCELLED';
                 $order->save();

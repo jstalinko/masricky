@@ -36,10 +36,10 @@ class WebhookController extends Controller
                        "Invoice: ".$order->invoice."\n".
                        "Total: Rp ".number_format($order->total,0,',','.')."\n\n".
                        "--------------------------------\n\n
-                        ".$order->product->content."\n\n
+                        ".strip_tags($order->product->content)."\n\n
                         
                         Terimakasih telah berbelanja di Bstore.ID \n";
-            file_get_contents("https://api.telegram.org/bot".$settings['telegram_bot_token']."/sendMessage?chat_id=".$order->user->telegram_id."&text=".urlencode($message));
+            file_get_contents("https://api.telegram.org/bot".$settings['telegram_bot_token']."/sendMessage?chat_id=".$order->user->telegram_id."&text=".urlencode($message).'&parse_mode=HTML');
         }
         // Update order berdasarkan status dari Xendit
         $order->update([
