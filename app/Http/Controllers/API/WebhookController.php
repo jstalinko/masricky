@@ -21,7 +21,7 @@ class WebhookController extends Controller
         }
 
         // Cari order berdasarkan external_id (invoice)
-        $order = Order::where('invoice', $payload['external_id'])->with('products')->first();
+        $order = Order::where('invoice', $payload['external_id'])->with('product')->first();
 
         if (!$order) {
             Log::warning('Order not found for invoice: ' . $payload['external_id']);
