@@ -57,6 +57,11 @@ class DashboardWidget extends BaseWidget
                 ->descriptionIcon('heroicon-o-x-circle')
                 ->color('danger')
                 ->icon('heroicon-o-x-circle'),
+                Stat::make('EXPIRED ORDERS', \App\Models\Order::where('status', 'EXPIRED')->count())
+                ->description('Jumlah order dibatalkan')
+                ->descriptionIcon('heroicon-o-x-circle')
+                ->color('danger')
+                ->icon('heroicon-o-x-circle'),
             
             Stat::make('Total Orders', \App\Models\Order::count())
                 ->description('Jumlah order masuk')
