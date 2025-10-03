@@ -82,6 +82,7 @@ class OrderResource extends Resource
                         default => 'secondary',
                     }),
                 Tables\Columns\TextColumn::make('payment_method'),
+                Tables\Columns\TextColumn::make('product.content')->searchable()->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
