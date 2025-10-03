@@ -60,7 +60,10 @@ if($avKey < 1 && !$product->unlimited_stock){
     $product->active = false;
     $product->save();
 }
-file_get_contents($url);
+$http = new \GuzzleHttp\Client();
+$http->get($url);
+$response = json_decode($http->getBody(), true);
+file_put_contents(storage_path('app/last_telegram_response.json'), json_encode($response, JSON_PRETTY_PRINT));
 
         }
         // Update order berdasarkan status dari Xendit
