@@ -21,7 +21,7 @@ class ProductController extends Controller
     public function getFromCategory(Request $request)
     {
         $category_id = $request->category_id;
-        $products = Product::where('category_id', $category_id)->orderBy('id','desc')->get();
+        $products = Product::where('category_id', $category_id)->orderBy('id','desc')->where('status','ready')->get();
         return response()->json([
             'success' =>true,
             'data' => $products
