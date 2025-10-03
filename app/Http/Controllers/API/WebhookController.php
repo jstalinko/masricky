@@ -31,14 +31,12 @@ class WebhookController extends Controller
 
         if($payload['status'] === 'PAID')
         {
+            
             $product = Product::find($order->product_id);
-            if($product->type == 'single')
-            {
-                $product->status = 'sold';
-                $product->save();
-            }
+           
             $settings= json_decode(file_get_contents(storage_path('app/settings.json')), true);
-            // fetch bot telegram api
+
+           $content = $product->getFirstAvailableKey();
           $message = "----[ Pembayaran Berhasil ]----\n\n".
            "Invoice : ".$order->invoice."\n".
            "Produk : ".$order->product->name."\n".
@@ -46,7 +44,7 @@ class WebhookController extends Controller
            "Total   : Rp ".number_format($order->total, 0, ',', '.')."\n\n".
            "--------------------------------\n\n".
            "📦 Produk :\n<pre>
-           ".strip_tags($order->product->content)."
+           ".strip_tags($content)."
            </pre>\n\n".
            "<b>".$order?->product?->category?->description."</b>\n".
            "Terimakasih telah berbelanja di Bstore.ID 🙏";
@@ -55,7 +53,13 @@ $url = "https://api.telegram.org/bot".$settings['telegram_bot_token'].
        "/sendMessage?chat_id=".$order->user->telegram_id.
        "&text=".urlencode($message).
        "&parse_mode=HTML";
-
+$product->markAsUsed($content);
+$avKey = (count($product->getAvailableKeys())-1);
+if($avKey < 1 && !$product->unlimited_stock){
+    $product->status = 'sold';
+    $product->active = false;
+    $product->save();
+}
 file_get_contents($url);
 
         }

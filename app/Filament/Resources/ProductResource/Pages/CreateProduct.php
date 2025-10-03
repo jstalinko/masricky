@@ -14,6 +14,8 @@ class CreateProduct extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['slug'] = Str::slug($data['name']);
+        $data['stock'] = $data['type'] == 'mass' ? 0 : count($data['content']);
+        $data['unlimited_stock'] = ($data['type'] == 'mass') ? true : false;
         return $data;
     }
 }

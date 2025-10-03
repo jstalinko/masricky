@@ -38,14 +38,21 @@ class ProductResource extends Resource
                 Forms\Components\Select::make('type')
                 ->options(['mass' => 'Produk Massal', 'single' => 'Produk Sekali Pakai'])
                     ->required(),
-                Forms\Components\RichEditor::make('content')
-                    ->required()
-                    ->columnSpanFull(),
+                Forms\Components\Repeater::make('content')
+                    ->columnSpanFull()->schema([
+                        Forms\Components\TextInput::make('product_key')
+                            ->required()
+                            ->label('Product Content'),
+                        Forms\Components\Select::make('product_status')
+                            ->required()
+                            ->label('Status')
+                            ->options(['available' => 'Available', 'used' => 'Used']),
+                            ])->columns(2),
+                        
                 Forms\Components\Select::make('status')
                     ->required()
                     ->options(['ready' => 'Ready', 'sold' => 'Sold']),
-                Forms\Components\Toggle::make('unlimited_stock')
-                    ->required(), 
+              
                 Forms\Components\Toggle::make('active')
                     ->required(),
             ]);
@@ -79,7 +86,17 @@ class ProductResource extends Resource
                         'sold' => 'danger',
                         default => 'secondary',
                     }),
-            
+                Tables\Columns\TextColumn::make('stock')
+                    ->sortable()
+                    ->label('Stock')
+                    ->formatStateUsing(fn ($state, $record) => $record->unlimited_stock ? 'Unlimited' : $state)
+                    ->color(fn ($state, $record): string => match (true) {
+                        $record->unlimited_stock => 'success',
+                        $state > 10 => 'primary',
+                        $state > 0 => 'warning',
+                        $state == 0 => 'danger',
+                        default => 'secondary',
+                    }),
                 Tables\Columns\ToggleColumn::make('active')
                     ,
                 Tables\Columns\TextColumn::make('created_at')
