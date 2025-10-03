@@ -35,8 +35,22 @@ class WebhookController extends Controller
             $product = Product::find($order->product_id);
            
             $settings= json_decode(file_get_contents(storage_path('app/settings.json')), true);
+ // Update order berdasarkan status dari Xendit
+        $order->update([
+            'status'         => $payload['status'],          // contoh: PAID, SETTLED, EXPIRED
+            'payment_id'     => $payload['id'] ?? null,      // ID dari Xendit
+            'payment_method' => $payload['payment_method'] ?? null,
+            'amount'         => $payload['amount'] ?? $order->amount,
+            'fee'            => $payload['fees_paid_amount'] ?? $order->fee,
+            'total'          => $payload['paid_amount'] ?? $order->total,
+        ]);
 
            $content = $product->getFirstAvailableKey();
+           if($content === null)
+           {
+            $message = " Maaf,Pembayaran berhasil namun produk ".$product->name." sudah habis terjual. Silakan hubungi admin untuk informasi lebih lanjut.";
+            $message.= "Hubungi admin : ".$settings['admin_telegram_id']."\n";
+           }else{
           $message = "----[ Pembayaran Berhasil ]----\n\n".
            "Invoice : ".$order->invoice."\n".
            "Produk : ".$order->product->name."\n".
@@ -49,10 +63,7 @@ class WebhookController extends Controller
            "<b>".strip_tags($order?->product?->category?->description)."</b>\n".
            "Terimakasih telah berbelanja di Bstore.ID 🙏";
 
-$url = "https://api.telegram.org/bot".$settings['telegram_bot_token'].
-       "/sendMessage?chat_id=".$order->user->telegram_id.
-       "&text=".urlencode($message).
-       "&parse_mode=HTML";
+
 $product->markAsUsed($content);
 $avKey = (count($product->getAvailableKeys()));
 if($avKey < 1 && !$product->unlimited_stock){
@@ -60,21 +71,19 @@ if($avKey < 1 && !$product->unlimited_stock){
     $product->active = false;
     $product->save();
 }
+
+           }
+$url = "https://api.telegram.org/bot".$settings['telegram_bot_token'].
+       "/sendMessage?chat_id=".$order->user->telegram_id.
+       "&text=".urlencode($message).
+       "&parse_mode=HTML";
 $http = new \GuzzleHttp\Client();
 $http->get($url);
 $response = json_decode($http->getBody(), true);
 file_put_contents(storage_path('app/last_telegram_response.json'), json_encode($response, JSON_PRETTY_PRINT));
 
         }
-        // Update order berdasarkan status dari Xendit
-        $order->update([
-            'status'         => $payload['status'],          // contoh: PAID, SETTLED, EXPIRED
-            'payment_id'     => $payload['id'] ?? null,      // ID dari Xendit
-            'payment_method' => $payload['payment_method'] ?? null,
-            'amount'         => $payload['amount'] ?? $order->amount,
-            'fee'            => $payload['fees_paid_amount'] ?? $order->fee,
-            'total'          => $payload['paid_amount'] ?? $order->total,
-        ]);
+       
 
         
 
