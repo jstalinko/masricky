@@ -2,16 +2,17 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\CategoryResource\Pages;
-use App\Filament\Resources\CategoryResource\RelationManagers;
-use App\Models\Category;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use App\Models\Category;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
+use Filament\Resources\Resource;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\CategoryResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\CategoryResource\RelationManagers;
 
 class CategoryResource extends Resource
 {
@@ -24,8 +25,8 @@ class CategoryResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
-                    ->required(),
-                Forms\Components\RichEditor::make('description'),
+                    ->required()->columnSpanFull(),
+                Forms\Components\RichEditor::make('description')->columnSpanFull(),
                 Forms\Components\Toggle::make('active')
                     ->required(),
             ]);
@@ -38,7 +39,7 @@ class CategoryResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('description')
-                    ->searchable(),
+                    ->searchable()->formatStateUsing(fn ($state) => Str::limit(strip_tags($state), 50)),
 
                 Tables\Columns\ToggleColumn::make('active'),
                 Tables\Columns\TextColumn::make('created_at')
