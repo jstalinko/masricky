@@ -54,7 +54,7 @@ $url = "https://api.telegram.org/bot".$settings['telegram_bot_token'].
        "&text=".urlencode($message).
        "&parse_mode=HTML";
 $product->markAsUsed($content);
-$avKey = (count($product->getAvailableKeys())-1);
+$avKey = (count($product->getAvailableKeys()));
 if($avKey < 1 && !$product->unlimited_stock){
     $product->status = 'sold';
     $product->active = false;
