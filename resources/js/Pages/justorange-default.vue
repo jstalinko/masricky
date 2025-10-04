@@ -19,7 +19,7 @@
 
     <!-- CTA Button -->
     <a 
-      href="https://t.me/BStoreIDOrder_bot" 
+      href="https://wa.me/?phone=6281329334696&text=Halo%2C%20BStore.ID%20!" 
       target="_blank" 
       rel="noopener noreferrer"
       class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-full shadow-lg transition-transform transform hover:scale-105"
