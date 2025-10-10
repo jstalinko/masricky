@@ -1,0 +1,5 @@
+{
+    "require": {
+        "muhammadnan/tripay-payment-gateway": "^2.0"
+    }
+}

@@ -13,6 +13,7 @@ if (fs.existsSync(settingsPath)) {
 // --- KONFIGURASI ---
 const BOT_TOKEN = settings.telegram_bot_token;
 const API_BASE_URL = 'https://masricky.com/api';
+const API_PAYMENT_URL = 'https://api.bstore.id/api'
 // --- PERUBAHAN: URL Placeholder untuk gambar QRIS ---
 const QRIS_IMAGE_URL = './qris.png'; // Ganti dengan URL gambar QRIS statis Anda jika punya
 

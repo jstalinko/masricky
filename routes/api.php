@@ -35,3 +35,4 @@ Route::get('/test-product', function () {
     $product = \App\Models\Product::find(31);
     print_r($product->content);
 });
+
