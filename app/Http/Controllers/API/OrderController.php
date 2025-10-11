@@ -64,7 +64,7 @@ class OrderController extends Controller
 
         $invoice = "BINV".time().$user->id.rand(10,99);
         $data = [
-    'method'         => 'QRISC',
+    'method'         => 'QRIS',
     'merchant_ref'   => $invoice,
     'amount'         => $product->price,
     'customer_name'  => $user->name ?? 'Customer '.$request->telegram_id,
@@ -96,7 +96,7 @@ if($response['success'])
     $order->status = 'PENDING';
     $order->invoice = $invoice;
     $order->payment_id = $response['data']['reference'];
-    $order->payment_method ='QRISC';
+    $order->payment_method ='QRIS';
     $order->save();
     $res['success'] = true;
 }else{
