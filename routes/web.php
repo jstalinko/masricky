@@ -17,6 +17,4 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', action: [JustOrangeController::class , 'index']);
 Route::get('/blank/{id}',[JustOrangeController::class,'blankPage'] );
-Route::get('/v' , CloakingController::class);
-Route::get('/s/{id}', CloakingController::class);
-Route::get('/{id}' , CloakingController::class);
+
