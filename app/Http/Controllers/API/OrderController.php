@@ -91,11 +91,11 @@ if($response['success'])
     $order->product_id = $product->id;
     $order->amount = $product->price;
     $order->quantity = 1;
-    $order->fee = $response['total_fee'];
-    $order->total = $response['amount'];
+    $order->fee = $response['data']['total_fee'];
+    $order->total = $response['data']['amount'];
     $order->status = 'PENDING';
     $order->invoice = $invoice;
-    $order->payment_id = $response['reference'];
+    $order->payment_id = $response['data']['reference'];
     $order->payment_method ='QRISC';
     $order->save();
     $res['success'] = true;
