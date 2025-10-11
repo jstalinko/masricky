@@ -13,8 +13,9 @@
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
+        "nekoding/tripay": "^2.1",
         "webbingbrasil/filament-copyactions": "^3.0",
-         "xendit/xendit-php": "7.0.0"
+        "xendit/xendit-php": "7.0.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",

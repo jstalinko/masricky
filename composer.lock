@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "98e83e65147e71df38eea74b063e0e6e",
+    "content-hash": "cf0cdc204b37a3f4f7f1c7aa5ab90cdd",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -3624,6 +3624,68 @@
                 }
             ],
             "time": "2025-03-24T10:02:05+00:00"
+        },
+        {
+            "name": "nekoding/tripay",
+            "version": "v2.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/nekoding/tripay.git",
+                "reference": "b28c62cf5a127f4d77b705b70d75c023fdf216c2"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/nekoding/tripay/zipball/b28c62cf5a127f4d77b705b70d75c023fdf216c2",
+                "reference": "b28c62cf5a127f4d77b705b70d75c023fdf216c2",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^7.0",
+                "illuminate/support": "^10.18|^11.0",
+                "php": "^7.4|^8.0|^8.1|^8.2"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^8",
+                "phpunit/phpunit": "^9.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "Tripay": "Nekoding\\Tripay\\TripayFacade"
+                    },
+                    "providers": [
+                        "Nekoding\\Tripay\\TripayServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Nekoding\\Tripay\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "enggar tivandi",
+                    "email": "enggartivandi@outlook.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Tripay PHP Client for Laravel",
+            "homepage": "https://github.com/nekoding/tripay",
+            "keywords": [
+                "nekoding",
+                "tripay"
+            ],
+            "support": {
+                "issues": "https://github.com/nekoding/tripay/issues",
+                "source": "https://github.com/nekoding/tripay/tree/v2.1.0"
+            },
+            "time": "2024-07-31T15:16:12+00:00"
         },
         {
             "name": "nesbot/carbon",
