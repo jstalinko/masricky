@@ -85,6 +85,19 @@ $tripay = new Tripay(new HttpClient(env('TRIPAY_API_KEY')));
 $response = $tripay->createTransaction($data, Tripay::CLOSE_TRANSACTION)->getResponse();
 if($response['success'])
 {
+
+    $order = new Order();
+    $order->user_id = $user->id;
+    $order->product_id = $product->id;
+    $order->amount = $product->price;
+    $order->quantity = 1;
+    $order->fee = $response['total_fee'];
+    $order->total = $response['amount'];
+    $order->status = 'PENDING';
+    $order->invoice = $invoice;
+    $order->payment_id = $response['reference'];
+    $order->payment_method ='QRISC';
+    $order->save();
     $res['success'] = true;
 }else{
     $res['success'] = false;
