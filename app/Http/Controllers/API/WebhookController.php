@@ -75,6 +75,7 @@ class WebhookController extends Controller
             $invoice->fee = $data->total_fee;
             $invoice->total = $data->total_amount;
             $invoice->status = $status;
+        
             $invoice->save();
             if ($invoice->status == 'PAID') {
                 $product = Product::find($invoice->product_id);
@@ -85,6 +86,8 @@ class WebhookController extends Controller
                     $message = " Maaf,Pembayaran berhasil namun produk " . $product->name . " sudah habis terjual. Silakan hubungi admin untuk informasi lebih lanjut.";
                     $message .= "Hubungi admin : " . $settings['admin_telegram_id'] . "\n";
                 } else {
+                    $invoice->product_content = $invoice->product->name." : ".$content;
+                    $invoice->save();
                     $message = "----[ Pembayaran Berhasil ]----\n\n" .
                         "Invoice : " . $invoice->invoice . "\n" .
                         "Produk : " . $invoice->product->name . "\n" .
