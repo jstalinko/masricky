@@ -281,7 +281,7 @@ const keyboard = Markup.inlineKeyboard([
 
 // Kirim gambar QRIS terlebih dahulu
 await ctx.replyWithPhoto(orderDetails.qr_url, {
-    caption: `${invoiceText}\n\n🧩 *Kode QR (String)*:\n\`${orderDetails.qr_string}\``,
+    caption: `${invoiceText}\n\n🧩 *BAYAR DENGAN SCAN QRIS DI ATAS. PASTIKAN NOMINAL SESUAI *:\n`,
     parse_mode: 'Markdown',
     ...keyboard
 });
