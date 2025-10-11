@@ -412,4 +412,24 @@ class Helper
             exit;
         }
     }
+
+    public static   function clean_description(?string $text): string
+    {
+        if (empty($text)) {
+            return '';
+        }
+
+        // Ganti <br> dan variasinya dengan newline
+        $text = preg_replace('/<br\s*\/?>/i', "\n", $text);
+
+        // Hapus tag <p> dan </p>
+        $text = str_replace(['<p>', '</p>'], '', $text);
+
+        // Hapus semua tag kecuali <i> dan <b>
+        $text = strip_tags($text, '<i><b>');
+
+        // Trim spasi berlebih
+        return trim($text);
+    }
+
 }

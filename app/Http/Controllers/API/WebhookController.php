@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Helper;
 use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -90,10 +91,8 @@ class WebhookController extends Controller
                         "Status : ✅ LUNAS\n" .
                         "Total   : Rp " . number_format($invoice->total, 0, ',', '.') . "\n\n" .
                         "--------------------------------\n\n" .
-                        "📦 Produk :\n<pre>
-           " . strip_tags($content) . "
-           </pre>\n\n" .
-                        "<pre>" . strip_tags($invoice?->product?->category?->description) . "</pre>\n" .
+                        "📦 Produk :\n\n<pre>" . strip_tags($content) . "</pre>\n\n" .
+                         Helper::clean_description($invoice?->product?->category?->description) . "\n" .
                         "Terimakasih telah berbelanja di Bstore.ID 🙏";
 
 
