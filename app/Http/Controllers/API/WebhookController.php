@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Helper;
 use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -58,7 +59,7 @@ class WebhookController extends Controller
                     "📦 Produk :\n<pre>
            " . strip_tags($content) . "
            </pre>\n\n" .
-                    "" . $order?->product?->category?->description . "\n" .
+                    "" . Helper::clean_description($order?->product?->category?->description) . "\n" .
                     "Terimakasih telah berbelanja di Bstore.ID 🙏";
 
 
