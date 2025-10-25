@@ -5,11 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\Product;
-use Nekoding\Tripay\Tripay;
 use Illuminate\Http\Request;
-use Nekoding\Tripay\Signature;
 use App\Http\Controllers\Controller;
-use Nekoding\Tripay\Networks\HttpClient;
 
 class OrderController extends Controller
 {
@@ -62,55 +59,48 @@ class OrderController extends Controller
             ], 200);
         }
 
-        $invoice = "BINV".time().$user->id.rand(10,99);
-        $data = [
-    'method'         => 'QRIS',
-    'merchant_ref'   => $invoice,
-    'amount'         => $product->price,
-    'customer_name'  => $user->name ?? 'Customer '.$request->telegram_id,
-    'customer_email' => $user->email ?? 'user'.$request->telegram_id.'@bstore.id',
-    'customer_phone' => $user->telegram_id,
-    'order_items'    => [
-        [
-            'sku'         => $product->slug,
-            'name'        => $product->name,
-            'price'       => $product->price,
-            'quantity'    => 1,
-        ]
-    ],
-    'expired_time' => (time() + (24 * 60 * 60)), // 24 jam
-    'signature'    => Signature::generate($invoice.$product->price)
-];
-$tripay = new Tripay(new HttpClient(env('TRIPAY_API_KEY')));
-$response = $tripay->createTransaction($data, Tripay::CLOSE_TRANSACTION)->getResponse();
-if($response['success'])
-{
+        \Xendit\Configuration::setXenditKey(env('XENDIT_API_KEY'));
+        $apiInstance = new \Xendit\Invoice\InvoiceApi();
+        $invoice =  'INV' . time() . '' . $user->telegram_id;
+        $create_invoice_request = new \Xendit\Invoice\CreateInvoiceRequest([
+            'external_id' =>$invoice,
+            'description' => 'Order product ',
+            'amount' => $product->price,
+            'invoice_duration' => 172800,
+            'currency' => 'IDR',
+            'reminder_time' => 1,
+        ]);
+        $for_user_id = "6065d8a4da970440a3bc747c";
 
-    $order = new Order();
-    $order->user_id = $user->id;
-    $order->product_id = $product->id;
-    $order->amount = $product->price;
-    $order->quantity = 1;
-    $order->fee = $response['data']['total_fee'];
-    $order->total = $response['data']['amount'];
-    $order->status = 'PENDING';
-    $order->invoice = $invoice;
-    $order->payment_id = $response['data']['reference'];
-    $order->payment_method ='QRIS';
-    $order->save();
-    $res['success'] = true;
-}else{
-    $res['success'] = false;
-}
- 
-$res['data'] = $response['data'];
-$res['product'] = $product;
-$res['user'] = $user;
+        try {
+            $result = $apiInstance->createInvoice($create_invoice_request);
+            $order = new Order();
+            $order->user_id = $user->id;
+            $order->product_id = $product->id;
+            $order->amount = $product->price;
+            $order->quantity = 1;
+            $order->fee = 0;
+            $order->total = $product->price;
+            $order->status = 'PENDING';
+            $order->invoice = $invoice;
+            $order->payment_id = $result['id'];
+            $order->payment_method = $result['payment_method'];
+            $order->save();
 
-return response()->json($res,200,[],JSON_PRETTY_PRINT);
+            return response()->json([
+                'success' => true,
+                'message' => 'Invoice created successfully',
+                'data' => $result,
+                'product' => $product,
+            ], 200, [], JSON_PRETTY_PRINT);
+        } catch (\Xendit\XenditSdkException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
 
-     
-}
+            ], 500, [], JSON_PRETTY_PRINT);
+        }
+    }
 
     public function cancelOrder(Request $request)
     {

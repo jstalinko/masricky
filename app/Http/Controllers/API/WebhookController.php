@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Helper;
 use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 
@@ -14,117 +12,78 @@ class WebhookController extends Controller
 {
     public function webhookInvoice(Request $request)
     {
-        // Ambil data JSON dari body request
-        $json = $request->getContent();
+        $payload = $request->all();
 
-        Log::info('callback_tripay : ' . $json);
+        // Log data webhook (buat debug)
+        Log::info('Xendit Webhook Invoice:', $payload);
 
-        // Ambil callback signature dari header
-        $callbackSignature = $request->header('X-Callback-Signature', '');
-
-        // Private key Tripay kamu
-        $privateKey = env('TRIPAY_PRIVATE_KEY');
-
-        // Generate signature untuk verifikasi
-        $signature = hash_hmac('sha256', $json, $privateKey);
-
-        // Validasi signature
-        if ($callbackSignature !== $signature) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid signature',
-            ], 401);
+        if (!isset($payload['external_id']) || !isset($payload['status'])) {
+            return response()->json(['message' => 'Invalid payload'], 400);
         }
 
-        // Decode JSON
-        $data = json_decode($json);
+        // Cari order berdasarkan external_id (invoice)
+        $order = Order::where('invoice', $payload['external_id'])->with('product')->with('user')->first();
 
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid data sent by payment gateway',
-            ], 400);
+        if (!$order) {
+            Log::warning('Order not found for invoice: ' . $payload['external_id']);
+            return response()->json(['message' => 'Order not found'], 404);
         }
 
-        // Validasi event callback
-        if ($request->header('X-Callback-Event') !== 'payment_status') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unrecognized callback event: ' . $request->header('X-Callback-Event'),
-            ], 400);
-        }
+        if ($payload['status'] === 'PAID') {
 
-        // Ambil data penting
-        $invoiceId = $data->merchant_ref ?? null;
-        $tripayReference = $data->reference ?? null;
-        $status = strtoupper((string) ($data->status ?? ''));
-        $isClosedPayment = $data->is_closed_payment ?? 0;
+            $product = Product::find($order->product_id);
 
-        if ($isClosedPayment == 1) {
-            $invoice = Order::where('invoice', $invoiceId)->where('status', '!=', 'PAID')->first();
+            $settings = json_decode(file_get_contents(storage_path('app/settings.json')), true);
+            // Update order berdasarkan status dari Xendit
+            $order->update([
+                'status'         => $payload['status'],          // contoh: PAID, SETTLED, EXPIRED
+                'payment_id'     => $payload['id'] ?? null,      // ID dari Xendit
+                'payment_method' => $payload['payment_method'] ?? null,
+                'amount'         => $payload['amount'] ?? $order->amount,
+                'fee'            => $payload['fees_paid_amount'] ?? $order->fee,
+                'total'          => $payload['paid_amount'] ?? $order->total,
+            ]);
 
-            if (! $invoice) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invoice not found or already paid: ' . $invoiceId,
-                ], 404);
-            }
-            $invoice->payment_id = $tripayReference;
-            $invoice->payment_method = $data->payment_method_code;
-            $invoice->amount = $data->amount_received;
-            $invoice->fee = $data->total_fee;
-            $invoice->total = $data->total_amount;
-            $invoice->status = $status;
-        
-            $invoice->save();
-            if ($invoice->status == 'PAID') {
-                $product = Product::find($invoice->product_id);
-                $settings = json_decode(file_get_contents(storage_path('app/settings.json')), true);
-
-                $content = $product->getFirstAvailableKey();
-                if ($content === null) {
-                    $message = " Maaf,Pembayaran berhasil namun produk " . $product->name . " sudah habis terjual. Silakan hubungi admin untuk informasi lebih lanjut.";
-                    $message .= "Hubungi admin : " . $settings['admin_telegram_id'] . "\n";
-                } else {
-                    $invoice->product_content = $invoice->product->name." : ".$content;
-                    $invoice->save();
-                    $message = "----[ Pembayaran Berhasil ]----\n\n" .
-                        "Invoice : " . $invoice->invoice . "\n" .
-                        "Produk : " . $invoice->product->name . "\n" .
-                        "Status : ✅ LUNAS\n" .
-                        "Total   : Rp " . number_format($invoice->total, 0, ',', '.') . "\n\n" .
-                        "--------------------------------\n\n" .
-                        "📦 Produk :\n\n<pre>" . strip_tags($content) . "</pre>\n\n" .
-                         Helper::clean_description($invoice?->product?->category?->description) . "\n" .
-                        "Terimakasih telah berbelanja di Bstore.ID 🙏";
+            $content = $product->getFirstAvailableKey();
+            if ($content === null) {
+                $message = " Maaf,Pembayaran berhasil namun produk " . $product->name . " sudah habis terjual. Silakan hubungi admin untuk informasi lebih lanjut.";
+                $message .= "Hubungi admin : " . $settings['admin_telegram_id'] . "\n";
+            } else {
+                $message = "----[ Pembayaran Berhasil ]----\n\n" .
+                    "Invoice : " . $order->invoice . "\n" .
+                    "Produk : " . $order->product->name . "\n" .
+                    "Status : ✅ LUNAS\n" .
+                    "Total   : Rp " . number_format($order->total, 0, ',', '.') . "\n\n" .
+                    "--------------------------------\n\n" .
+                    "📦 Produk :\n<pre>
+           " . strip_tags($content) . "
+           </pre>\n\n" .
+                    "" . $order?->product?->category?->description . "\n" .
+                    "Terimakasih telah berbelanja di Bstore.ID 🙏";
 
 
-                    $product->markAsUsed($content);
-                    $avKey = (count($product->getAvailableKeys()));
-                    if ($avKey < 1 && !$product->unlimited_stock) {
-                        $product->status = 'sold';
-                        $product->active = false;
-                        $product->save();
-                    }
+                $product->markAsUsed($content);
+                $avKey = (count($product->getAvailableKeys()));
+                if ($avKey < 1 && !$product->unlimited_stock) {
+                    $product->status = 'sold';
+                    $product->active = false;
+                    $product->save();
                 }
-                $url = "https://api.telegram.org/bot" . $settings['telegram_bot_token'] .
-                    "/sendMessage?chat_id=" . $invoice->user->telegram_id .
-                    "&text=" . urlencode($message) .
-                    "&parse_mode=HTML";
-                $ch = curl_init();
-                curl_setopt($ch, CURLOPT_URL, $url);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                $response = curl_exec($ch);
-                curl_close($ch);
             }
-
-
-            return response()->json(['success' => true]);
+            $url = "https://api.telegram.org/bot" . $settings['telegram_bot_token'] .
+                "/sendMessage?chat_id=" . $order->user->telegram_id .
+                "&text=" . urlencode($message) .
+                "&parse_mode=HTML";
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $response = curl_exec($ch);
+            curl_close($ch);
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Invalid payment type (open payment not supported)',
-        ], 400);
+
+
+
+        return response()->json(['message' => 'OK'], 200);
     }
 }

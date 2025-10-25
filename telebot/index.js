@@ -12,7 +12,7 @@ if (fs.existsSync(settingsPath)) {
 
 // --- KONFIGURASI ---
 const BOT_TOKEN = settings.telegram_bot_token;
-const API_BASE_URL = 'https://api.bstore.id/api';
+const API_BASE_URL = 'https://masricky.com/api';
 // --- PERUBAHAN: URL Placeholder untuk gambar QRIS ---
 const QRIS_IMAGE_URL = './qris.png'; // Ganti dengan URL gambar QRIS statis Anda jika punya
 
@@ -263,29 +263,30 @@ bot.action(/product_(.+)/, async (ctx) => {
         const response = await axios.post(`${API_BASE_URL}/order/create`, orderData);
     
         if (response.data && response.data.success) {
-          const orderDetails = response.data.data; // Misal: { merchant_ref, product_name, amount, qr_url, qr_string }
+            const orderDetails = response.data.data; // Misal: { invoice_id, product_name, total_price, qris_image_url }
 
-await ctx.deleteMessage();
+            // Hapus pesan "Membuat pesanan..."
+            await ctx.deleteMessage();
 
-const priceFormatted = `Rp ${orderDetails.amount.toLocaleString('id-ID')}`;
+            const priceFormatted = `Rp ${orderDetails.amount.toLocaleString('id-ID')}`;
 
-const invoiceText = `🧾 **INVOICE PEMBAYARAN**\n\n` +
-    `**ID Pesanan:** \`${orderDetails.merchant_ref}\`\n` +
-    `**Produk:** ${response.data.product?.name || '-'}\n` +
-    `**Total Bayar:** *${priceFormatted}*\n\n` +
-    `Silakan lakukan pembayaran dengan scan QRIS di bawah ini:`;
+            const invoiceText = `🧾 **INVOICE PEMBAYARAN**\n\n` +
+                                `**ID Pesanan:** \`${orderDetails.external_id}\`\n` +
+                                `**Produk:** ${response.data.product?.name || '-'}\n` +
+                                `**Total Bayar:** *${priceFormatted}*\n\n` +
+                                `Silahkan lakukan pembayaran dengan klik tombol "Bayar" dibawah ini
+Setelah melakukan pembayaran, produk otomatis akan di kirim ke akun anda.`;
 
-const keyboard = Markup.inlineKeyboard([
-    Markup.button.callback('❌ Batalkan', `cancel_${orderDetails.merchant_ref}`)
-], { columns: 1 });
-
-// Kirim gambar QRIS terlebih dahulu
-await ctx.replyWithPhoto(orderDetails.qr_url, {
-    caption: `${invoiceText}\n\n🧩 *BAYAR DENGAN SCAN QRIS DI ATAS. PASTIKAN NOMINAL SESUAI *:\n`,
-    parse_mode: 'Markdown',
-    ...keyboard
-});
-
+            const keyboard = Markup.inlineKeyboard([
+                Markup.button.url(`💳 Bayar ${priceFormatted}`, orderDetails.invoice_url),
+                Markup.button.callback('❌ Batalkan', `cancel_${orderDetails.external_id}`)
+            ],{ columns: 1 });
+            // Kirim pesan invoice dengan tombol konfirmasi
+            await ctx.reply(invoiceText, {
+                parse_mode: 'Markdown',
+                
+                ...keyboard
+            });
 
 
         } else {
