@@ -72,7 +72,7 @@ class Product extends Model
                 break;
             }
         }
-        $this->stock = count($this->getAvailableKeys());
+        $this->stock = count($this->getAvailableKeys())-1;
         $this->content = $content;
         return $this->save();
     }
