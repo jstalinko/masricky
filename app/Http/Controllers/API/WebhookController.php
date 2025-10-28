@@ -36,16 +36,10 @@ class WebhookController extends Controller
 
             $settings = json_decode(file_get_contents(storage_path('app/settings.json')), true);
             // Update order berdasarkan status dari Xendit
-            $order->update([
-                'status'         => $payload['status'],          // contoh: PAID, SETTLED, EXPIRED
-                'payment_id'     => $payload['id'] ?? null,      // ID dari Xendit
-                'payment_method' => $payload['payment_method'] ?? null,
-                'amount'         => $payload['amount'] ?? $order->amount,
-                'fee'            => $payload['fees_paid_amount'] ?? $order->fee,
-                'total'          => $payload['paid_amount'] ?? $order->total,
-            ]);
-
             $content = $product->getFirstAvailableKey();
+
+          
+
             if ($content === null) {
                 $message = " Maaf,Pembayaran berhasil namun produk " . $product->name . " sudah habis terjual. Silakan hubungi admin untuk informasi lebih lanjut.";
                 $message .= "Hubungi admin : " . $settings['admin_telegram_id'] . "\n";
@@ -63,6 +57,15 @@ class WebhookController extends Controller
                     "Terimakasih telah berbelanja di Bstore.ID 🙏";
 
 
+                      $order->update([
+                'status'         => $payload['status'],          // contoh: PAID, SETTLED, EXPIRED
+                'payment_id'     => $payload['id'] ?? null,      // ID dari Xendit
+                'payment_method' => $payload['payment_method'] ?? null,
+                'amount'         => $payload['amount'] ?? $order->amount,
+                'fee'            => $payload['fees_paid_amount'] ?? $order->fee,
+                'total'          => $payload['paid_amount'] ?? $order->total,
+                'product_content' =>  $content
+            ]);
                 $product->markAsUsed($content);
                 $avKey = (count($product->getAvailableKeys()));
                 if ($avKey < 1 && !$product->unlimited_stock) {
