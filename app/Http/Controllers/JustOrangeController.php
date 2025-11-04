@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Info;
+use Inertia\Inertia;
 use App\Models\MetaSetting;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 
 class JustOrangeController extends Controller
 {
@@ -16,5 +17,21 @@ class JustOrangeController extends Controller
     {
         $data['meta'] = MetaSetting::find($request->id);
         return view('blank',$data);
+    }
+
+    public function getInfo()
+    {
+        $info = Info::orderBy('created_at', 'desc')->get();
+        if (!$info) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No info available'
+            ], 404);
+        }else{
+            return response()->json([
+                'success' => true,
+                'data' => $info
+            ], 200);
+        }
     }
 }

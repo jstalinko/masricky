@@ -22,6 +22,49 @@ class WebhookController extends Controller
             return response()->json(['message' => 'Invalid payload'], 400);
         }
 
+        if(preg_match('/SLD/', $payload['external_id'])) {
+            // Handle top-up webhook
+            Log::info('Received top-up webhook for invoice: ' . $payload['external_id']);
+            // Implement top-up handling logic here
+            $topupModel =  \App\Models\Topup::where('invoice', $payload['external_id'])->first();
+            if (!$topupModel) {
+                Log::warning('Top-up not found for invoice: ' . $payload['external_id']);
+                return response()->json(['message' => 'Top-up not found'], 404);
+            }
+            $nominal = $topupModel->amount;
+            $telegram_id = $topupModel->user->telegram_id;
+
+
+            $user = \App\Models\User::find($topupModel->user_id);
+            if (!$user) {
+                Log::warning('User not found for telegram_id: ' . $telegram_id);
+                return response()->json(['message' => 'User not found'], 404);
+            }
+
+            $user->balance += $nominal;
+            $user->save();
+            $topupModel->status = 'PAID';
+            $topupModel->payment_id = $payload['id'] ?? null;
+            $topupModel->payment_method = $payload['payment_method'] ?? null;
+            $topupModel->total = $payload['paid_amount'] ?? $topupModel->total;
+            $topupModel->save();
+
+
+            /** mutation */
+            \App\Models\Mutation::updateMutationIn(
+                $user->id,
+                $nominal,
+                'Top-up saldo via ' . ($payload['payment_method'] ?? 'Unknown'),
+                $user->balance
+            );
+            
+            Log::info('Top-up successful for user: ' . $telegram_id . ' Amount: ' . $nominal);
+
+            return response()->json(['message' => 'Top-up webhook received'], 200);
+        }
+
+
+
         // Cari order berdasarkan external_id (invoice)
         $order = Order::where('invoice', $payload['external_id'])->with('product')->with('user')->first();
 

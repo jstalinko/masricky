@@ -57,6 +57,50 @@ const showCategories = async (ctx, isEdit = false) => {
     }
 };
 
+// function balance
+const getUserBalance = async (telegramId) => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/user/${telegramId}`);
+        if (response.data && response.data.success) {
+            return response.data.data.balance || 0;
+        } else {
+            return 0;
+        }
+    } catch (error) {
+        console.error("Error fetching user balance:", error);
+        return 0;
+    }
+};
+
+// function getMutasi
+const getUserMutasi = async (telegramId) => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/user/mutasi/${telegramId}`);
+        if (response.data && response.data.success) {
+            return response.data.data || [];
+        } else {
+            return [];
+        }
+    } catch (error) {
+        console.error("Error fetching user mutasi:", error);
+        return [];
+    }
+};
+// function getinfo
+const getInfo = async () => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/info`);
+        if (response.data && response.data.success) {
+            return response.data.data || [];
+        } else {
+            return [];
+        }
+    }
+    catch (error) {
+        console.error("Error fetching info:", error);
+        return [];
+    }
+};
 
 // --- HANDLER BOT ---
 
@@ -66,6 +110,9 @@ const mainMenu = Markup.keyboard([
     ['💰 Saldo Saya', '📢 Info Terbaru']
 ]).resize();
 
+const menu_utama = () => {
+    return mainMenu;
+}
 // Handler untuk perintah /start
 // ... (kode bot Anda yang lain ada di sini)
 
@@ -117,8 +164,122 @@ bot.command('start', async (ctx) => {
 // --- Handler untuk Tombol Menu ---
 bot.hears('🛒 Daftar Produk', (ctx) => showCategories(ctx, false));
 
-bot.hears('💰 Saldo Saya', (ctx) => ctx.reply('🚧 Fitur pengecekan saldo sedang dalam pengembangan!'));
-bot.hears('📢 Info Terbaru', (ctx) => ctx.reply('Tidak ada informasi terbaru saat ini.'));
+bot.hears('💰 Saldo Saya', (ctx) => {
+    const telegramId = ctx.from.id;
+    getUserBalance(telegramId).then(balance => {
+        const balanceFormatted = `Rp ${balance.toLocaleString('id-ID')}`;
+        ctx.reply(`💰 Saldo Anda saat ini: *${balanceFormatted}*`, {
+            parse_mode: 'Markdown',
+            ...Markup.inlineKeyboard([
+            [
+                Markup.button.callback('💳 Top Up', 'topup'),
+                Markup.button.callback('📊 Mutasi', 'mutasi')
+            ]
+            ])
+        });
+    }).catch(error => {
+        console.error("Error getting balance:", error);
+        ctx.reply('Maaf, tidak dapat mengambil saldo Anda saat ini.');
+    });
+});
+
+bot.action('topup', (ctx) => {
+  ctx.answerCbQuery();
+
+  return ctx.reply('Pilih nominal top-up:', {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: '💰 100.000', callback_data: 'topup_100000' },
+          { text: '💰 200.000', callback_data: 'topup_200000' }
+        ],
+        [
+          { text: '💰 500.000', callback_data: 'topup_500000' },
+          { text: '💰 1.000.000', callback_data: 'topup_1000000' }
+        ],
+        [
+          { text: '🔙 Kembali', callback_data: 'menu_utama' }
+        ]
+      ]
+    }
+  });
+});
+bot.action(/topup_(\d+)/, (ctx) => {
+  const amount = ctx.match[1];
+  ctx.answerCbQuery();
+  ctx.reply(`Topup saldo sebesar Rp ${Number(amount).toLocaleString('id-ID')}.`);
+  // Panggil API untuk membuat topup
+    const telegramId = ctx.from.id;
+    axios.get(`${API_BASE_URL}/topup/${amount}/${telegramId}`)
+    .then(response => {
+        if (response.data && response.data.success) {
+            const topupDetails = response.data.data;
+            const amountFormatted = `Rp ${topupDetails.amount.toLocaleString('id-ID')}`;
+            const invoiceText = `🧾 **INVOICE TOP-UP SALDO**\n\n` +
+                                `**ID Top-Up:** \`${topupDetails.external_id}\`\n` +
+                                `**Jumlah Top-Up:** *${amountFormatted}*\n\n` +
+                                `Silahkan lakukan pembayaran dengan klik tombol "Bayar" dibawah ini.`;
+
+            const keyboard = Markup.inlineKeyboard([
+                Markup.button.url(`💳 Bayar ${amountFormatted}`, topupDetails.invoice_url),
+                Markup.button.callback('❌ Batalkan', `cancel_${topupDetails.external_id}`)
+            ],{ columns: 1 });
+            // Kirim pesan invoice dengan tombol konfirmasi
+            ctx.reply(invoiceText, {
+                parse_mode: 'Markdown',
+                
+                ...keyboard
+            });
+        } else {
+            ctx.reply(response.data.message || 'Gagal membuat top-up. Silakan coba lagi.');
+        }
+    })
+    .catch(error => {
+        console.error("API Error at /topup:", error.message);
+        ctx.reply(
+            '❌ Maaf, terjadi kesalahan saat membuat top-up Anda. Silakan coba lagi nanti.'
+        );
+    });
+});
+
+bot.action('mutasi', async (ctx) => {
+    ctx.answerCbQuery();
+    const telegramId = ctx.from.id;
+    const mutasiList = await getUserMutasi(telegramId);
+    if (mutasiList.length === 0) {
+        return ctx.reply('ℹ️ Belum ada mutasi.');
+    }
+    let mutasiMessage = '📊 **Riwayat Mutasi Saldo Anda**\n\n'
+    mutasiList.slice(0, 10).forEach(mutasi => {
+        const date = new Date(mutasi.created_at);
+        const formattedDate = date.toLocaleDateString('id-ID', {
+            day: '2-digit', month: 'short', year: 'numeric'
+        });
+        const amountFormatted = `Rp ${mutasi.amount.toLocaleString('id-ID')}`;
+        mutasiMessage += `**Tipe:** ${mutasi.type}\n` +
+                         `**Jumlah:** ${amountFormatted}\n` +
+                         `**Tanggal:** ${formattedDate}\n` +
+                         `--------------------\n`;
+    });
+    ctx.reply(mutasiMessage, { parse_mode: 'Markdown' });
+});
+
+bot.hears('📢 Info Terbaru',async (ctx) => {
+    const infos = await getInfo();
+    if (Object.keys(infos).length === 0) {
+        return ctx.reply('ℹ️ Tidak ada info terbaru saat ini.');
+    }
+    infos.slice(0, 5).forEach(info => {
+        const date = new Date(info.created_at);
+        const formattedDate = date.toLocaleDateString('id-ID', {
+            day: '2-digit', month: 'short', year: 'numeric'
+        });
+        ctx.reply(`📰 **${info.title}** | __${info.label ?? ''}__\n\n` +
+                  `${info.content}\n\n` +
+                  `📅 Tanggal: ${formattedDate}`, { parse_mode: 'Markdown' });
+    });
+    console.log(infos)
+});
 
 bot.hears('📜 Riwayat Order', async (ctx) => {
     const telegramId = ctx.from.id;
@@ -279,6 +440,7 @@ Setelah melakukan pembayaran, produk otomatis akan di kirim ke akun anda.`;
 
             const keyboard = Markup.inlineKeyboard([
                 Markup.button.url(`💳 Bayar ${priceFormatted}`, orderDetails.invoice_url),
+                Markup.button.callback('💰 Bayar dengan SALDO', `pay_balance_${orderDetails.external_id}`),
                 Markup.button.callback('❌ Batalkan', `cancel_${orderDetails.external_id}`)
             ],{ columns: 1 });
             // Kirim pesan invoice dengan tombol konfirmasi
@@ -306,7 +468,12 @@ Setelah melakukan pembayaran, produk otomatis akan di kirim ke akun anda.`;
     }
 });
 
+bot.action(/pay_balance_(.+)/, async (ctx) => {
+    const invoiceId = ctx.match[1];
+    await ctx.answerCbQuery('Sedang memproses pembayaran dengan saldo...');
+ 
 
+});
 
 // --- HANDLER BARU: Untuk tombol konfirmasi pembayaran ---
 bot.action(/confirm_(.+)/, async (ctx) => {

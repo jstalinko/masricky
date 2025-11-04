@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Helper;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 
 class OrderController extends Controller
@@ -64,7 +66,7 @@ class OrderController extends Controller
         $invoice =  'INV' . time() . '' . $user->telegram_id;
         $create_invoice_request = new \Xendit\Invoice\CreateInvoiceRequest([
             'external_id' =>$invoice,
-            'description' => 'Order product ',
+            'description' => $product->name,
             'amount' => $product->price,
             'invoice_duration' => 172800,
             'currency' => 'IDR',
@@ -166,5 +168,173 @@ class OrderController extends Controller
         }
     }
 
+    public function createTopup(Request $request)
+    {
+        $telegram_id = $request->telegram_id;
+        $nominal =(int) $request->nominal;
+        if($nominal < 100000)
+        {
+            return response()->json([
+                'success' => false,
+                'message' => 'Minimal topup adalah Rp. 100.000'
+            ], 400);
+        }
+
+        $user = User::where('telegram_id', $telegram_id)->first();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        \Xendit\Configuration::setXenditKey(env('XENDIT_API_KEY'));
+        $apiInstance = new \Xendit\Invoice\InvoiceApi();
+        $invoice =  'SLD-' .$user->telegram_id.'-'. substr(strtoupper(time() . $user->telegram_id.$nominal) , 6);
+        $create_invoice_request = new \Xendit\Invoice\CreateInvoiceRequest([
+            'external_id' =>$invoice,
+            'description' => 'TOPUP SALDO Rp. ' . number_format($nominal,0,',','.'). ' User: ' . $user->name,
+            'amount' => $nominal,
+            'invoice_duration' => 172800,
+            'currency' => 'IDR',
+            'reminder_time' => 1,
+        ]);
+
+        try {
+
+                
+
+           
+            $result = $apiInstance->createInvoice($create_invoice_request);
+             $topupModel = new \App\Models\Topup();
+            $topupModel->user_id = $user->id;
+            $topupModel->amount = $nominal;
+            $topupModel->fee = 0;
+            $topupModel->total = $nominal;
+            $topupModel->status = 'PENDING';
+            $topupModel->invoice = $invoice;
+            $topupModel->payment_id = $result['id'];
+            $topupModel->payment_method = $result['payment_method'];
+            $topupModel->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Topup invoice created successfully',
+                'data' => $result,
+            ], 200, [], JSON_PRETTY_PRINT);
+        } catch (\Xendit\XenditSdkException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500, [], JSON_PRETTY_PRINT);
+        }
+    }
+
+    public function createOrderBalance(Request $request)
+    {
+        $telegram_id = $request->telegram_id;
+        $invoice_id = $request->invoice_id;
+
+        $order = Order::where('invoice', $invoice_id)->first();
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found'
+            ], 404);
+        }
+        $product = Product::find($order->product_id);
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Produk tidak tesedia'
+            ], 200);
+        }
+        if($product->status == 'sold'){
+            return response()->json([
+                'success' => false,
+                'message' => 'Produk sudah tidak tersedia / sold out'
+            ], 200);
+        }
+
+        $user = User::where('telegram_id', $telegram_id)->first();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        if($user->balance < $product->price){
+            return response()->json([
+                'success' => false,
+                'message' => 'Saldo tidak mencukupi, silahkan lakukan top-up saldo'
+            ], 200);
+        }
+
+        // 
+        
+        $order->payment_method = 'BALANCE';
+        $order->payment_id = 'BALANCE-' . time() . '-' . $user->telegram_id;
+          $order->status = 'PAID';
+            $order->save();
+            // Kurangi saldo user
+            $user->balance -= $product->price;
+            $user->save();
+            /** mutation */
+            \App\Models\Mutation::updateMutationOut(
+                $user->id,
+                $product->price,
+                'Pembelian produk ' . $product->name . ' menggunakan saldo',
+                $user->balance
+            );
+
+            $settings = json_decode(file_get_contents(storage_path('app/settings.json')), true);
+            // Update order berdasarkan status dari Xendit
+            $content = $product->getFirstAvailableKey();
+
+          
+
+            if ($content === null) {
+                $message = " Maaf,Pembayaran berhasil namun produk " . $product->name . " sudah habis terjual. Silakan hubungi admin untuk informasi lebih lanjut.";
+                $message .= "Hubungi admin : " . $settings['admin_telegram_id'] . "\n";
+            } else {
+                $message = "----[ Pembayaran Berhasil ]----\n\n" .
+                    "Invoice : " . $order->invoice . "\n" .
+                    "Produk : " . $order->product->name . "\n" .
+                    "Status : ✅ LUNAS\n" .
+                    "Total   : Rp " . number_format($order->total, 0, ',', '.') . "\n\n" .
+                    "--------------------------------\n\n" .
+                    "📦 Produk :\n<pre>
+           " . strip_tags($content) . "
+           </pre>\n\n" .
+                    "" . Helper::clean_description($order?->product?->category?->description) . "\n" .
+                    "Terimakasih telah berbelanja di Bstore.ID 🙏";
+
+
+                $product->markAsUsed($content);
+                $avKey = (count($product->getAvailableKeys()));
+                if ($avKey < 1 && !$product->unlimited_stock) {
+                    $product->status = 'sold';
+                    $product->active = false;
+                    $product->save();
+                }
+            }
+            $url = "https://api.telegram.org/bot" . $settings['telegram_bot_token'] .
+                "/sendMessage?chat_id=" . $order->user->telegram_id .
+                "&text=" . urlencode($message) .
+                "&parse_mode=HTML";
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $response = curl_exec($ch);
+            curl_close($ch);
+
+            Log::info('Telegram response: ' . $response);
+
+        return response()->json([
+            'success' => true,
+            'balance' => $user->balance
+        ], 200);
+    }
     
 }
