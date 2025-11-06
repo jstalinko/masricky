@@ -271,10 +271,12 @@ class OrderController extends Controller
             ], 200);
         }
 
-        // 
+        
+        \Xendit\Configuration::setXenditKey(env('XENDIT_API_KEY'));
+        $apiInstance = new \Xendit\Invoice\InvoiceApi();
+        $apiInstance->expireInvoice($order->payment_id);
         
         $order->payment_method = 'BALANCE';
-        $order->payment_id = 'BALANCE-' . time() . '-' . $user->telegram_id;
           $order->status = 'PAID';
             $order->save();
             // Kurangi saldo user
@@ -333,7 +335,8 @@ class OrderController extends Controller
 
         return response()->json([
             'success' => true,
-            'balance' => $user->balance
+            'balance' => $user->balance,
+            'data' => $order
         ], 200);
     }
     

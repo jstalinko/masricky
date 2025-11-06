@@ -12,7 +12,7 @@ if (fs.existsSync(settingsPath)) {
 
 // --- KONFIGURASI ---
 const BOT_TOKEN = settings.telegram_bot_token;
-const API_BASE_URL = 'https://masricky.com/api';
+const API_BASE_URL = 'http://localhost:8000/api';
 // --- PERUBAHAN: URL Placeholder untuk gambar QRIS ---
 const QRIS_IMAGE_URL = './qris.png'; // Ganti dengan URL gambar QRIS statis Anda jika punya
 
@@ -24,7 +24,7 @@ const bot = new Telegraf(BOT_TOKEN);
 // Objek sederhana untuk menyimpan data produk sementara
 // Dalam aplikasi nyata, lebih baik menggunakan database atau cache seperti Redis
 const productCache = new Map();
-
+ 
 /**
  * Fungsi untuk mengambil dan menampilkan daftar kategori produk.
  * @param {object} ctx - Konteks dari Telegraf.
@@ -475,7 +475,41 @@ Setelah melakukan pembayaran, produk otomatis akan di kirim ke akun anda.`;
 bot.action(/pay_balance_(.+)/, async (ctx) => {
     const invoiceId = ctx.match[1];
     await ctx.answerCbQuery('Sedang memproses pembayaran dengan saldo...');
- 
+    try{
+
+        const orderData = {
+            invoice_id: invoiceId,
+            telegram_id: ctx.from.id
+        };
+        const response = await axios.post(`${API_BASE_URL}/order/create-balance`, orderData);
+        if (response.data && response.data.success) {
+            const orderDetails = response.data.data;
+            const priceFormatted = `Rp ${orderDetails.amount.toLocaleString('id-ID')}`;
+            const successText = `✅ **Pembayaran Berhasil!**\n\n` +
+                                `Terima kasih! Pesanan Anda untuk \`${orderDetails.invoice_id}\` telah berhasil dibayar menggunakan saldo Anda.\n\n` +
+                                `**Total Bayar:** *${priceFormatted}*`;
+
+            await ctx.editMessageCaption(
+                successText,
+                {
+                    parse_mode: 'Markdown',
+                    ...Markup.inlineKeyboard([
+                        Markup.button.callback('🛒 Beli Lagi', 'back_to_categories')
+                    ])
+                }
+            );
+        } else {
+            await ctx.editMessageText(response.data.message || 'Gagal memproses pembayaran dengan saldo Anda.');
+        }
+    }catch(error){
+        console.error("API Error at /order/create-balance:", error.message);
+        await ctx.editMessageText(
+            '❌ Maaf, terjadi kesalahan saat memproses pembayaran dengan saldo Anda. Silakan coba lagi nanti.', 
+            Markup.inlineKeyboard([
+                Markup.button.callback('⬅️ Kembali ke Kategori', 'back_to_categories')
+            ])
+        );
+    }
 
 });
 
