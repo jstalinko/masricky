@@ -7,6 +7,7 @@ use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -53,7 +54,7 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('username'),
                 Tables\Columns\TextColumn::make('telegram_id'),
                 Tables\Columns\TextColumn::make('phone'),
-                Tables\Columns\TextColumn::make('balance'),
+                Tables\Columns\TextColumn::make('balance')->money('IDR'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -74,6 +75,35 @@ class UserResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
+
+                Tables\Actions\BulkAction::make('add_balance')
+                    ->label('Add Balance')
+                    ->action(function ($records, $data): void {
+                        foreach ($records as $record) {
+                            $record->balance += $data['amount'];
+                            $record->save();
+
+                            // Mutations
+                            \App\Models\Mutation::updateMutationIn(
+                                $record->id,
+                                $data['amount'],
+                                'Admin added balance',
+                                $record->balance
+                            );
+                        }
+
+                        Notification::make()
+                            ->title('Balance added successfully.')
+                            ->success()
+                            ->send();
+                        
+                    })
+                    ->form([
+                        Forms\Components\TextInput::make('amount')
+                            ->label('Amount :')
+                            ->numeric()
+                            ->required(),
+                    ])->deselectRecordsAfterCompletion(),
             ]);
     }
 

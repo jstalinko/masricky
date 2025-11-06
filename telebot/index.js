@@ -190,6 +190,10 @@ bot.action('topup', (ctx) => {
     reply_markup: {
       inline_keyboard: [
         [
+            {text: '💰 10.000',callback_data:'topup_10000'},
+            {text: '💰 50.000',callback_data:'topup_50000'},
+        ],
+        [
           { text: '💰 100.000', callback_data: 'topup_100000' },
           { text: '💰 200.000', callback_data: 'topup_200000' }
         ],

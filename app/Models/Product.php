@@ -62,18 +62,52 @@ class Product extends Model
     /**
      * Update product_status jadi 'used' berdasarkan product_key
      */
-    public function markAsUsed(string $key): bool
-    {
-        $content = $this->content;
-
-        foreach ($content as &$item) {
-            if ($item['product_key'] === $key) {
-                $item['product_status'] = 'used';
-                break;
-            }
+   public function markAsUsed(string $key): bool
+{
+    // Pastikan content dalam bentuk array
+    $content = $this->content;
+    if (is_string($content)) {
+        $decoded = json_decode($content, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            $content = $decoded;
+        } else {
+            // kalau format JSON rusak, gagal
+            return false;
         }
-        $this->stock = count($this->getAvailableKeys())-1;
-        $this->content = $content;
-        return $this->save();
     }
+
+    $found = false;
+    foreach ($content as &$item) {
+        if (!isset($item['product_key'])) {
+            continue;
+        }
+
+        // hanya ubah kalau belum 'used'
+        if ($item['product_key'] === $key && (($item['product_status'] ?? '') !== 'used')) {
+            $item['product_status'] = 'used';
+            $found = true;
+            break;
+        }
+    }
+    unset($item); // penting: lepas reference
+
+    if (! $found) {
+        // key tidak ditemukan atau sudah used
+        return false;
+    }
+
+    // Simpan content kembali (jika semula JSON, simpan sebagai JSON; jika array, simpan array)
+    $this->content = is_string($this->content) ? json_encode($content) : $content;
+
+    // Hitung sisa kunci yang belum digunakan sebagai stock
+    $availableKeysCount = 0;
+    foreach ($content as $item) {
+        if (($item['product_status'] ?? '') !== 'used') {
+            $availableKeysCount++;
+        }
+    }
+    $this->stock = $availableKeysCount;
+
+    return $this->save();
+}
 }
